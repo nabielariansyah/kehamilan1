@@ -96,21 +96,20 @@
 
     <div class="card">
         <h2>Cek Tanggal Lain</h2>
-        <input type="date" id="randomDate">
+        <!-- Pembatasan tanggal menggunakan atribut min dan max -->
+        <input type="date" id="randomDate" min="2026-05-25" max="2027-03-22">
         <div id="randomResultWeek" class="result-week">-</div>
         <div id="randomResultMonth" class="result-month">-</div>
     </div>
 
     <script>
-        // HPHT dikunci di 25 Mei 2026
         const hphtDate = new Date('2026-05-25T00:00:00');
+        const minDateStr = '2026-05-25';
+        const maxDateStr = '2027-03-22';
 
         function calculatePregnancy(targetDateStr) {
             const target = new Date(targetDateStr + 'T00:00:00');
             
-            // Jika tanggal yang dicek sebelum HPHT
-            if (target < hphtDate) return { weekStr: "-", monthStr: "Belum Hamil" };
-
             const diffTime = target.getTime() - hphtDate.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -138,30 +137,37 @@
         }
 
         function init() {
-            // Ambil waktu lokal saat ini (WIB/Android timezone)
             const today = new Date();
-            // Format ke YYYY-MM-DD dengan menyesuaikan timezone lokal agar tidak bergeser hari
             const offset = today.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(today - offset)).toISOString().split('T')[0];
             
-            // Hitung usia hari ini
-            const todayCalc = calculatePregnancy(localISOTime);
+            // Validasi: Jika hari ini diakses setelah 22 Maret 2027, nilai "Usia Hari Ini" akan tertahan di batas maksimal
+            let todayValue = localISOTime;
+            if (todayValue > maxDateStr) todayValue = maxDateStr;
+            if (todayValue < minDateStr) todayValue = minDateStr;
+
+            const todayCalc = calculatePregnancy(todayValue);
             document.getElementById('todayResultWeek').innerText = todayCalc.weekStr;
             document.getElementById('todayResultMonth').innerText = `Setara ${todayCalc.monthStr}`;
 
-            // Setup input kalender
             const dateInput = document.getElementById('randomDate');
-            dateInput.value = localISOTime;
+            dateInput.value = todayValue;
             
-            // Event listener saat tanggal diubah
             dateInput.addEventListener('change', function() {
                 if(!this.value) return;
+
+                // Proteksi ganda jika pengguna menggeser/mengetik manual di luar batas
+                if (this.value > maxDateStr) {
+                    this.value = maxDateStr;
+                } else if (this.value < minDateStr) {
+                    this.value = minDateStr;
+                }
+
                 const calc = calculatePregnancy(this.value);
                 document.getElementById('randomResultWeek').innerText = calc.weekStr;
                 document.getElementById('randomResultMonth').innerText = `Setara ${calc.monthStr}`;
             });
             
-            // Eksekusi pertama kali untuk mengisi nilai di kartu "Cek Tanggal Lain"
             dateInput.dispatchEvent(new Event('change'));
         }
 
