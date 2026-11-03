@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4A90E2">
+    <title>Kehamilan Amirah</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+            background-color: #f0f4f8; 
+            color: #334e68; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #243b53;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+            color: #627d98;
+            font-weight: 500;
+        }
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); 
+            margin-bottom: 20px; 
+            box-sizing: border-box; 
+        }
+        h2 { 
+            margin-top: 0; 
+            font-size: 1rem; 
+            color: #829ab1; 
+            text-align: center; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .result-week { 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+            color: #4A90E2; 
+            text-align: center; 
+            margin: 8px 0; 
+        }
+        .result-month { 
+            font-size: 1.1rem; 
+            color: #486581; 
+            text-align: center; 
+            font-weight: 500;
+        }
+        input[type="date"] { 
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 10px; 
+            margin-bottom: 15px;
+            border: 1px solid #d9e2ec; 
+            border-radius: 10px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            color: #334e68;
+            background-color: #f0f4f8;
+            font-family: inherit;
+        }
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #4A90E2;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Kehamilan Amirah</h1>
+        <p>HPHT: 25 Mei 2026 🔒</p>
+    </div>
+
+    <div class="card">
+        <h2>Usia Hari Ini</h2>
+        <div id="todayResultWeek" class="result-week">-</div>
+        <div id="todayResultMonth" class="result-month">-</div>
+    </div>
+
+    <div class="card">
+        <h2>Cek Tanggal Lain</h2>
+        <input type="date" id="randomDate">
+        <div id="randomResultWeek" class="result-week">-</div>
+        <div id="randomResultMonth" class="result-month">-</div>
+    </div>
+
+    <script>
+        // HPHT dikunci di 25 Mei 2026
+        const hphtDate = new Date('2026-05-25T00:00:00');
+
+        function calculatePregnancy(targetDateStr) {
+            const target = new Date(targetDateStr + 'T00:00:00');
+            
+            // Jika tanggal yang dicek sebelum HPHT
+            if (target < hphtDate) return { weekStr: "-", monthStr: "Belum Hamil" };
+
+            const diffTime = target.getTime() - hphtDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            // Perhitungan Minggu
+            const weeks = Math.floor(diffDays / 7);
+            const days = diffDays % 7;
+
+            // Perhitungan Bulan Kalender presisi
+            let months = target.getFullYear() * 12 + target.getMonth() - (hphtDate.getFullYear() * 12 + hphtDate.getMonth());
+            let tempDate = new Date(hphtDate);
+            tempDate.setMonth(tempDate.getMonth() + months);
+            
+            if (target < tempDate) {
+                months--;
+                tempDate = new Date(hphtDate);
+                tempDate.setMonth(tempDate.getMonth() + months);
+            }
+            
+            const remainingDaysMonth = Math.floor((target - tempDate) / (1000 * 60 * 60 * 24));
+
+            return {
+                weekStr: `${weeks} Minggu ${days} Hari`,
+                monthStr: `${months} Bulan ${remainingDaysMonth} Hari`
+            };
+        }
+
+        function init() {
+            // Ambil waktu lokal saat ini (WIB/Android timezone)
+            const today = new Date();
+            // Format ke YYYY-MM-DD dengan menyesuaikan timezone lokal agar tidak bergeser hari
+            const offset = today.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(today - offset)).toISOString().split('T')[0];
+            
+            // Hitung usia hari ini
+            const todayCalc = calculatePregnancy(localISOTime);
+            document.getElementById('todayResultWeek').innerText = todayCalc.weekStr;
+            document.getElementById('todayResultMonth').innerText = `Setara ${todayCalc.monthStr}`;
+
+            // Setup input kalender
+            const dateInput = document.getElementById('randomDate');
+            dateInput.value = localISOTime;
+            
+            // Event listener saat tanggal diubah
+            dateInput.addEventListener('change', function() {
+                if(!this.value) return;
+                const calc = calculatePregnancy(this.value);
+                document.getElementById('randomResultWeek').innerText = calc.weekStr;
+                document.getElementById('randomResultMonth').innerText = `Setara ${calc.monthStr}`;
+            });
+            
+            // Eksekusi pertama kali untuk mengisi nilai di kartu "Cek Tanggal Lain"
+            dateInput.dispatchEvent(new Event('change'));
+        }
+
+        init();
+    </script>
+</body>
+</html>
